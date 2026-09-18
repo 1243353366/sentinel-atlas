@@ -37,3 +37,15 @@ Original Sentinel Atlas project code is licensed under the MIT License; see `LIC
 ## Safety boundary
 
 The superagent exposes bounded, read-only, synthetic-evidence tools. It does not execute code, download samples, grant permissions, access production systems, or learn permission bypasses.
+
+## Self-host with Docker
+
+The full Node application can run independently of WebDev and Cloudflare with Docker Compose. It uses a persistent MySQL volume for Sentinel Atlas data; the Cloudflare Worker is a separate optional deployment target.
+
+```bash
+cp .env.selfhost.example .env
+# Edit .env and replace every required placeholder with unique secrets.
+docker compose -f docker-compose.selfhost.yml up -d --build
+```
+
+Open `http://localhost:3000`. To stop the app without deleting the database volume, run `docker compose -f docker-compose.selfhost.yml down`. The stack runs database migrations on application startup. Put it behind an HTTPS reverse proxy before exposing it to the public internet, and keep `.env` out of Git.
