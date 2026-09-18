@@ -2,6 +2,10 @@
 
 Sentinel Atlas is a defensive cyber-reasoning workspace and training roguelike. It combines evidence-grounded analysis, synthetic simulations, a Python research layer, provenance-backed evaluation records, and a bounded Cloudflare Worker superagent.
 
+## Worker versions
+
+**v1.0.0** is the previously working Worker baseline at commit `1dca5a8`. **v2.0.0** is the current labeled configuration and audit release; it preserves the same bounded safety model while enforcing one canonical Wrangler configuration.
+
 ## Deploy the correct Worker
 
 The **only deployable Cloudflare Worker target** is:

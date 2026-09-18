@@ -2,6 +2,8 @@
 
 This repository contains two intentionally separate runtimes.
 
+The previously working Worker baseline is **v1.0.0** at commit `1dca5a8`. The current canonical deployment configuration is **v2.0.0**; it keeps the same bounded Worker behavior and removes ambiguous Wrangler targets.
+
 | Label | Entry point | Runtime | Deploy status |
 |---|---|---|---|
 | **FAILED — do not deploy** | `dist/index.js` | Node/Express with MySQL, OAuth, and tRPC | **Failed to deploy as a Cloudflare Worker.** Retained only as a historical reference; do not select this config. |

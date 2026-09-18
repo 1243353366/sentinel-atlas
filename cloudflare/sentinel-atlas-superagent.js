@@ -1,4 +1,4 @@
-const VERSION = "v1";
+const VERSION = "v2";
 const MAX_BODY = 16_384;
 const MAX_STEPS = 6;
 
