@@ -4,10 +4,10 @@ This repository contains two intentionally separate runtimes.
 
 | Label | Entry point | Runtime | Deploy status |
 |---|---|---|---|
-| **Sentinel Atlas app reference** | `dist/index.js` | Node/Express with MySQL, OAuth, and tRPC | Buildable in the WebDev runtime; **not a Cloudflare Worker entrypoint**. |
+| **FAILED — do not deploy** | `dist/index.js` | Node/Express with MySQL, OAuth, and tRPC | **Failed to deploy as a Cloudflare Worker.** Retained only as a historical reference; do not select this config. |
 | **Sentinel Atlas Superagent** | `cloudflare/sentinel-atlas-superagent.js` | Cloudflare Worker | Deploy this target with Wrangler or the Cloudflare dashboard. |
 
-The root `wrangler.jsonc` points to the Worker target. The Node-shaped configuration is retained only as `wrangler.node-reference.jsonc` so it cannot be selected accidentally.
+The root `wrangler.jsonc` points to the Worker target. The old Node-shaped configuration is retained only as `wrangler.FAILED-node-build-do-not-deploy.jsonc` and is explicitly marked as failed. Do not select or deploy it.
 
 From the repository root, deploy the Worker with:
 
