@@ -20,7 +20,7 @@ The expected Worker name is `sentinel-atlas-superagent`.
 
 ## Do not deploy the failed target
 
-`wrangler.FAILED-node-build-do-not-deploy.jsonc` is a historical reference for the Node/Express application bundle at `dist/index.js`. **It failed to deploy as a Cloudflare Worker and must not be selected.** The Node application remains a separate WebDev runtime target.
+`docs/failed/wrangler.FAILED-node-build-do-not-deploy.jsonc.disabled` is a historical reference for the Node/Express application bundle at `dist/index.js`. **It failed to deploy as a Cloudflare Worker and must not be selected.** The Node application remains a separate WebDev runtime target.
 
 ## License and attribution
 

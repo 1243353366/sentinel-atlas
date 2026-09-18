@@ -7,7 +7,7 @@ This repository contains two intentionally separate runtimes.
 | **FAILED — do not deploy** | `dist/index.js` | Node/Express with MySQL, OAuth, and tRPC | **Failed to deploy as a Cloudflare Worker.** Retained only as a historical reference; do not select this config. |
 | **Sentinel Atlas Superagent** | `cloudflare/sentinel-atlas-superagent.js` | Cloudflare Worker | Deploy this target with Wrangler or the Cloudflare dashboard. |
 
-The root `wrangler.jsonc` points to the Worker target. The old Node-shaped configuration is retained only as `wrangler.FAILED-node-build-do-not-deploy.jsonc` and is explicitly marked as failed. Do not select or deploy it.
+The root `wrangler.jsonc` points to the Worker target. The old Node-shaped configuration is retained only as `docs/failed/wrangler.FAILED-node-build-do-not-deploy.jsonc.disabled` and is explicitly marked as failed. Do not select or deploy it.
 
 From the repository root, deploy the Worker with:
 
