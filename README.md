@@ -2,6 +2,10 @@
 
 Sentinel Atlas is a defensive cyber-reasoning workspace and training roguelike. It combines evidence-grounded analysis, synthetic simulations, a Python research layer, provenance-backed evaluation records, and a bounded Cloudflare Worker superagent.
 
+## Product experiences
+
+Sentinel Atlas is organized around five connected experiences: **Autonomous Investigation Lab**, **Purple-Team Arena**, **AI Self-Training Laboratory**, **Adversarial / Deception Lab**, and **Researcher / Scenario Builder**. The shared loop is **Investigate → Attack/Defend → Observe → Explain → Evaluate → Learn → Generate a harder test**.
+
 ## Worker versions
 
 **v1.0.0** is the previously working Worker baseline at commit `1dca5a8`. **v2.0.0** is the current labeled configuration and audit release; it preserves the same bounded safety model while enforcing one canonical Wrangler configuration.

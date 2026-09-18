@@ -68,6 +68,16 @@ type GameResult = {
   progress?: { xp: number; level: number; unlocked: string[]; gamesPlayed: number } | null;
 };
 
+type ProductExperience = {
+  id: string;
+  number: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  status: "available" | "guarded" | "roadmap";
+  accent: "cyan" | "violet" | "emerald" | "amber" | "sky";
+};
+
 function confidenceTone(confidence?: Result["confidence"]) {
   if (confidence === "SUPPORTED") return "bg-emerald-400/15 text-emerald-300 border-emerald-300/30";
   if (confidence === "RESTRICTED") return "bg-rose-400/15 text-rose-300 border-rose-300/30";
@@ -91,6 +101,7 @@ export default function Home() {
   const catalog = trpc.simulation.catalog.useQuery();
   const gameCatalog = trpc.game.catalog.useQuery();
   const gameProgress = trpc.game.progress.useQuery(undefined, { enabled: isAuthenticated });
+  const productCatalog = trpc.product.catalog.useQuery();
   const submitGame = trpc.game.submit.useMutation({ onSuccess: data => setGameResult(data) });
   const recent = trpc.atlas.recent.useQuery(undefined, { enabled: isAuthenticated });
   const selectedMode = useMemo(() => modes.find(item => item.value === mode) ?? modes[0], [mode]);
@@ -155,6 +166,20 @@ export default function Home() {
               <div className="mt-7 flex flex-wrap gap-3 text-xs text-slate-400"><span className="inline-flex items-center gap-2"><Database className="h-3.5 w-3.5 text-cyan-300" />Own database</span><span className="inline-flex items-center gap-2"><BrainCircuit className="h-3.5 w-3.5 text-cyan-300" />Structured AI output</span><span className="inline-flex items-center gap-2"><LockKeyhole className="h-3.5 w-3.5 text-cyan-300" />Safety-gated</span></div>
             </div>
             <div className="hero-orbit" aria-hidden="true"><div /><div /><div /></div>
+          </section>
+
+          <section id="experiences" className="space-y-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div><p className="text-xs font-medium uppercase tracking-[0.18em] text-cyan-300">The Atlas operating model</p><h2 className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">Five ways to investigate, defend, and learn</h2></div>
+              <p className="max-w-md text-sm leading-6 text-slate-500">Every experience shares one evidence chain. The lab can get harder without becoming less explainable.</p>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+              {(productCatalog.data as ProductExperience[] | undefined)?.map(experience => {
+                const accent = { cyan: "border-cyan-300/20 bg-cyan-300/[0.06]", violet: "border-violet-300/20 bg-violet-300/[0.06]", emerald: "border-emerald-300/20 bg-emerald-300/[0.06]", amber: "border-amber-200/20 bg-amber-200/[0.06]", sky: "border-sky-300/20 bg-sky-300/[0.06]" }[experience.accent];
+                const status = experience.status === "available" ? "LIVE" : experience.status === "guarded" ? "GUARDED" : "ROADMAP";
+                return <a key={experience.id} href={experience.id === "investigation" ? "#analyze" : experience.id === "arena" ? "#simulate" : "#game"} className={`group rounded-2xl border p-4 transition hover:-translate-y-0.5 hover:border-white/25 ${accent}`}><div className="flex items-center justify-between"><span className="font-mono text-[10px] tracking-[0.18em] text-slate-500">{experience.number}</span><span className="rounded-full border border-white/10 px-2 py-1 font-mono text-[9px] tracking-[0.14em] text-slate-400">{status}</span></div><h3 className="mt-5 text-sm font-semibold leading-5 text-slate-100 group-hover:text-white">{experience.title}</h3><p className="mt-2 text-[11px] font-medium leading-4 text-cyan-100/70">{experience.subtitle}</p><p className="mt-3 text-xs leading-5 text-slate-500">{experience.description}</p></a>;
+              })}
+            </div>
           </section>
 
           <section id="game" className="game-panel overflow-hidden rounded-[28px] border border-violet-300/20 bg-gradient-to-br from-violet-300/[0.08] via-white/[0.025] to-cyan-300/[0.06] shadow-2xl shadow-black/20">

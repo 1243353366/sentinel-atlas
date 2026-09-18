@@ -6,4 +6,6 @@
 - `drizzle/schema.ts`: database schema for users, threat analyses, simulations, zombie quarantine, player progress, game runs, evaluation records, and learning candidates.
 - `server/*test.ts`: safety, catalog, scoring, and auth tests.
 
+Product experiences are exposed through the shared catalog in `server/routers.ts`: Investigation Lab, Purple-Team Arena, Self-Training Lab, Deception Lab, and Scenario Builder. They intentionally converge on evidence, telemetry, evaluation, provenance, and human approval rather than separate execution engines.
+
 The game is intentionally UI-native rather than an offensive execution engine. Any future lab adapter must sit behind a separate policy gate, explicit scope, human approval, isolated environment, snapshot/cleanup lifecycle, and no inherited access to production systems.

@@ -97,6 +97,14 @@ const GAME_SCENARIOS = [{
   mitigationOptions: ["Delete the evidence", "Disable all user access", "Preserve telemetry and tune the detection", "Run an unknown payload"],
 }];
 
+const PRODUCT_EXPERIENCES = [
+  { id: "investigation", number: "01", title: "Autonomous Investigation Lab", subtitle: "Plan → correlate → hypothesize → explain", description: "Give the agent an objective and receive an evidence-backed, explainable investigation record.", status: "available", accent: "cyan" },
+  { id: "arena", number: "02", title: "Purple-Team Arena", subtitle: "Red agent → blue agent → telemetry", description: "Run bounded adversary-versus-defender exercises and score evidence handling, detection, and mitigation.", status: "available", accent: "violet" },
+  { id: "self_training", number: "03", title: "AI Self-Training Laboratory", subtitle: "Outcome → evaluate → regress → promote", description: "Turn every run into a provenance-backed evaluation case; learning candidates remain pending until review.", status: "available", accent: "emerald" },
+  { id: "deception", number: "04", title: "Adversarial / Deception Lab", subtitle: "Tripwire → contain → snapshot → evaluate", description: "Probe prompt injection, poisoned context, and deceptive evidence using synthetic fixtures only.", status: "guarded", accent: "amber" },
+  { id: "builder", number: "05", title: "Researcher / Scenario Builder", subtitle: "Objective → environment → success condition", description: "Compose future experiments that generate telemetry, quizzes, evaluation criteria, and regression cases.", status: "roadmap", accent: "sky" },
+] as const;
+
 type AtlasResult = {
   summary: string;
   techniques: string[];
@@ -154,6 +162,9 @@ async function runAtlas(input: z.infer<typeof inputSchema>): Promise<AtlasResult
 
 export const appRouter = router({
   system: systemRouter,
+  product: router({
+    catalog: publicProcedure.query(() => PRODUCT_EXPERIENCES),
+  }),
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
