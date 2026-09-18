@@ -16,7 +16,7 @@ CREATE TABLE `player_progress` (
 	`userId` int NOT NULL,
 	`xp` int NOT NULL DEFAULT 0,
 	`level` int NOT NULL DEFAULT 1,
-	`unlocked` text NOT NULL DEFAULT ('["Evidence Investigation"]'),
+	`unlocked` text NOT NULL,
 	`correctAnswers` int NOT NULL DEFAULT 0,
 	`gamesPlayed` int NOT NULL DEFAULT 0,
 	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
