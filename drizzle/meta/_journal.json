@@ -43,6 +43,13 @@
       "when": 1789771455854,
       "tag": "0005_gigantic_arachne",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1789856772584,
+      "tag": "0006_tiny_smasher",
+      "breakpoints": true
     }
   ]
 }

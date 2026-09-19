@@ -28,6 +28,30 @@ export const threatAnalyses = mysqlTable("threat_analyses", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+export const investigationCases = mysqlTable("investigation_cases", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId"),
+  objective: text("objective").notNull(),
+  constraints: text("constraints").notNull(),
+  status: mysqlEnum("status", ["planned", "running", "completed", "blocked"]).notNull(),
+  conclusion: text("conclusion").notNull(),
+  confidence: mysqlEnum("confidence", ["SUPPORTED", "CANDIDATE", "UNMAPPED", "RESTRICTED"]).notNull(),
+  evidenceCount: int("evidenceCount").notNull().default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const investigationEvents = mysqlTable("investigation_events", {
+  id: int("id").autoincrement().primaryKey(),
+  caseId: int("caseId").notNull(),
+  sequence: int("sequence").notNull(),
+  action: varchar("action", { length: 120 }).notNull(),
+  detail: text("detail").notNull(),
+  authority: mysqlEnum("authority", ["ALLOW", "GUARDED", "APPROVAL REQUIRED", "DENIED"]).notNull(),
+  outcome: varchar("outcome", { length: 120 }).notNull(),
+  evidenceJson: text("evidenceJson").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
 export const simulations = mysqlTable("simulations", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId"),
@@ -103,6 +127,10 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type ThreatAnalysis = typeof threatAnalyses.$inferSelect;
 export type InsertThreatAnalysis = typeof threatAnalyses.$inferInsert;
+export type InvestigationCase = typeof investigationCases.$inferSelect;
+export type InsertInvestigationCase = typeof investigationCases.$inferInsert;
+export type InvestigationEvent = typeof investigationEvents.$inferSelect;
+export type InsertInvestigationEvent = typeof investigationEvents.$inferInsert;
 export type Simulation = typeof simulations.$inferSelect;
 export type InsertSimulation = typeof simulations.$inferInsert;
 export type PlayerProgress = typeof playerProgress.$inferSelect;

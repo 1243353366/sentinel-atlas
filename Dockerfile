@@ -22,4 +22,4 @@ COPY --from=build /app/drizzle ./drizzle
 COPY --from=build /app/drizzle.config.ts ./drizzle.config.ts
 
 EXPOSE 3000
-CMD ["sh", "-c", "pnpm db:push && pnpm start"]
+CMD ["pnpm", "start"]

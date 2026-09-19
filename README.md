@@ -48,4 +48,11 @@ cp .env.selfhost.example .env
 docker compose -f docker-compose.selfhost.yml up -d --build
 ```
 
-Open `http://localhost:3000`. To stop the app without deleting the database volume, run `docker compose -f docker-compose.selfhost.yml down`. The stack runs database migrations on application startup. Put it behind an HTTPS reverse proxy before exposing it to the public internet, and keep `.env` out of Git.
+On a fresh self-hosted database, apply the schema once before starting the app:
+
+```bash
+docker compose -f docker-compose.selfhost.yml run --rm app pnpm db:push
+docker compose -f docker-compose.selfhost.yml up -d
+```
+
+The production container intentionally does **not** replay the full migration history on every boot; this avoids startup failure when a managed database already contains the tables. Open `http://localhost:3000`. To stop the app without deleting the database volume, run `docker compose -f docker-compose.selfhost.yml down`. Put it behind an HTTPS reverse proxy before exposing it to the public internet, and keep `.env` out of Git.

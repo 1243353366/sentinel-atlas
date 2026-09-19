@@ -27,3 +27,16 @@ describe("atlas.analyze", () => {
     await expect(caller().atlas.analyze({ mode: "analyst", observation: "short" })).rejects.toThrow();
   });
 });
+
+describe("investigation.start", () => {
+  it("requires authentication before creating a persisted mission", async () => {
+    await expect(caller().investigation.start({ objective: "Investigate a suspicious document interaction" })).rejects.toThrow();
+  });
+
+  it("exposes the product catalog without exposing execution capabilities", async () => {
+    const catalog = await caller().product.catalog();
+    const investigation = catalog.find(item => item.id === "investigation");
+    expect(investigation?.status).toBe("available");
+    expect(JSON.stringify(investigation)).not.toMatch(/execute|download|propagate/i);
+  });
+});

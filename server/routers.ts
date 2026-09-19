@@ -4,7 +4,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
-import { getPlayerProgress, getRecentSimulations, getRecentThreatAnalyses, saveEvaluationRecord, saveGameRun, saveSimulation, saveThreatAnalysis, saveZombieQuarantine } from "./db";
+import { getInvestigationAnalytics, getPlayerProgress, getRecentInvestigationCases, getRecentSimulations, getRecentThreatAnalyses, saveEvaluationRecord, saveGameRun, saveInvestigationCase, saveSimulation, saveThreatAnalysis, saveZombieQuarantine } from "./db";
 
 const modeSchema = z.enum(["analyst", "adversary", "defender", "detection", "auditor"]);
 const inputSchema = z.object({
@@ -105,6 +105,26 @@ const PRODUCT_EXPERIENCES = [
   { id: "builder", number: "05", title: "Researcher / Scenario Builder", subtitle: "Objective → environment → success condition", description: "Compose future experiments that generate telemetry, quizzes, evaluation criteria, and regression cases.", status: "roadmap", accent: "sky" },
 ] as const;
 
+const investigationInputSchema = z.object({
+  objective: z.string().trim().min(10).max(600),
+  constraints: z.array(z.string().trim().min(1).max(180)).max(8).default(["sandbox only", "no external targets", "evidence required for conclusions"]),
+  observation: z.string().trim().max(1800).default("No observation supplied yet; begin with a bounded evidence request."),
+});
+
+function planInvestigation(input: z.infer<typeof investigationInputSchema>) {
+  const evidence = input.observation === "No observation supplied yet; begin with a bounded evidence request."
+    ? ["sandbox scope", "objective statement", "telemetry availability"]
+    : ["observed behavior", "process and identity context", "network and control-response telemetry"];
+  const events = [
+    { sequence: 1, action: "Objective established", detail: input.objective, authority: "ALLOW" as const, outcome: "bounded mission created", evidenceJson: JSON.stringify({ objective: input.objective }) },
+    { sequence: 2, action: "Evidence request planned", detail: "Request sanitized observations from the isolated sandbox adapter.", authority: "GUARDED" as const, outcome: "read-only observation request", evidenceJson: JSON.stringify({ evidence }) },
+    { sequence: 3, action: "Hypothesis generated", detail: "Form a candidate explanation without claiming compromise.", authority: "ALLOW" as const, outcome: "candidate hypothesis", evidenceJson: JSON.stringify({ confidence: "CANDIDATE" }) },
+    { sequence: 4, action: "Sandbox action boundary", detail: "Execution remains outside Sentinel Atlas; only telemetry may return.", authority: "APPROVAL REQUIRED" as const, outcome: "no execution requested by control plane", evidenceJson: JSON.stringify({ policy: "view-only" }) },
+    { sequence: 5, action: "Conclusion status", detail: "Await corroborating telemetry before promotion to supported.", authority: "GUARDED" as const, outcome: "pending evidence", evidenceJson: JSON.stringify({ missing: evidence }) },
+  ];
+  return { evidence, events };
+}
+
 type AtlasResult = {
   summary: string;
   techniques: string[];
@@ -164,6 +184,15 @@ export const appRouter = router({
   system: systemRouter,
   product: router({
     catalog: publicProcedure.query(() => PRODUCT_EXPERIENCES),
+  }),
+  investigation: router({
+    start: protectedProcedure.input(investigationInputSchema).mutation(async ({ input, ctx }) => {
+      const plan = planInvestigation(input);
+      const caseId = await saveInvestigationCase({ userId: ctx.user.id, objective: input.objective, constraints: JSON.stringify(input.constraints), status: "completed", conclusion: "Investigation plan created. Await sanitized sandbox telemetry before asserting what happened.", confidence: "CANDIDATE", evidenceCount: plan.evidence.length }, plan.events.map(event => ({ ...event, caseId: 0 })));
+      return { caseId, objective: input.objective, constraints: input.constraints, status: "completed" as const, conclusion: "Investigation plan created. Await sanitized sandbox telemetry before asserting what happened.", confidence: "CANDIDATE" as const, evidence: plan.evidence, events: plan.events, provenance: "control-plane plan; view-only sandbox boundary" };
+    }),
+    recent: protectedProcedure.query(({ ctx }) => getRecentInvestigationCases(ctx.user.id)),
+    analytics: protectedProcedure.query(({ ctx }) => getInvestigationAnalytics(ctx.user.id)),
   }),
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),

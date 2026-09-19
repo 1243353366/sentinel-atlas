@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Activity, ArrowUpRight, Ban, BrainCircuit, CheckCircle2, Database, FlaskConical, History, LockKeyhole, LogIn, PauseCircle, Play, Radar, ShieldCheck, Sparkles, TriangleAlert, Workflow } from "lucide-react";
+import { Activity, ArrowUpRight, Ban, BarChart3, BrainCircuit, CheckCircle2, Database, Eye, FlaskConical, History, ListChecks, LockKeyhole, LogIn, PauseCircle, Play, Radar, ShieldCheck, Sparkles, Target, TriangleAlert, Workflow } from "lucide-react";
 
 const modes = [
   { value: "analyst", label: "Threat analyst", hint: "Classify what happened" },
@@ -78,11 +78,21 @@ type ProductExperience = {
   accent: "cyan" | "violet" | "emerald" | "amber" | "sky";
 };
 
+type InvestigationEvent = { sequence: number; action: string; detail: string; authority: "ALLOW" | "GUARDED" | "APPROVAL REQUIRED" | "DENIED"; outcome: string; evidenceJson: string };
+type InvestigationResult = { caseId?: number | null; objective: string; constraints: string[]; status: "completed" | "blocked"; conclusion: string; confidence: string; evidence: string[]; events: InvestigationEvent[]; provenance: string };
+
 function confidenceTone(confidence?: Result["confidence"]) {
   if (confidence === "SUPPORTED") return "bg-emerald-400/15 text-emerald-300 border-emerald-300/30";
   if (confidence === "RESTRICTED") return "bg-rose-400/15 text-rose-300 border-rose-300/30";
   if (confidence === "CANDIDATE") return "bg-amber-300/15 text-amber-200 border-amber-200/30";
   return "bg-sky-300/15 text-sky-200 border-sky-200/30";
+}
+
+function authorityTone(authority: InvestigationEvent["authority"]) {
+  if (authority === "ALLOW") return "border-emerald-300/25 bg-emerald-300/10 text-emerald-200";
+  if (authority === "APPROVAL REQUIRED") return "border-amber-200/25 bg-amber-200/10 text-amber-100";
+  if (authority === "DENIED") return "border-rose-300/25 bg-rose-300/10 text-rose-200";
+  return "border-cyan-300/25 bg-cyan-300/10 text-cyan-200";
 }
 
 export default function Home() {
@@ -102,6 +112,10 @@ export default function Home() {
   const gameCatalog = trpc.game.catalog.useQuery();
   const gameProgress = trpc.game.progress.useQuery(undefined, { enabled: isAuthenticated });
   const productCatalog = trpc.product.catalog.useQuery();
+  const [investigationObjective, setInvestigationObjective] = useState("Investigate whether a suspicious document interaction represents an attack.");
+  const [investigation, setInvestigation] = useState<InvestigationResult | null>(null);
+  const startInvestigation = trpc.investigation.start.useMutation({ onSuccess: data => setInvestigation(data) });
+  const investigationAnalytics = trpc.investigation.analytics.useQuery(undefined, { enabled: isAuthenticated });
   const submitGame = trpc.game.submit.useMutation({ onSuccess: data => setGameResult(data) });
   const recent = trpc.atlas.recent.useQuery(undefined, { enabled: isAuthenticated });
   const selectedMode = useMemo(() => modes.find(item => item.value === mode) ?? modes[0], [mode]);
@@ -142,7 +156,8 @@ export default function Home() {
             <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
               <div className="mb-5 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-cyan-300"><Activity className="h-3.5 w-3.5" />Workspace</div>
               <nav className="space-y-1 text-sm">
-                <a className="flex items-center gap-3 rounded-xl bg-violet-300/10 px-3 py-2.5 text-violet-100" href="#game"><Play className="h-4 w-4" />Play training run</a>
+                <a className="flex items-center gap-3 rounded-xl bg-cyan-300/10 px-3 py-2.5 text-cyan-100" href="#investigation"><Target className="h-4 w-4" />Start investigation</a>
+                <a className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-slate-400 transition hover:bg-white/5 hover:text-slate-100" href="#game"><Play className="h-4 w-4" />Play training run</a>
                 <a className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-slate-400 transition hover:bg-white/5 hover:text-slate-100" href="#analyze"><BrainCircuit className="h-4 w-4" />Analyze behavior</a>
                 <a className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-slate-400 transition hover:bg-white/5 hover:text-slate-100" href="#simulate"><FlaskConical className="h-4 w-4" />Run simulation</a>
                 <a className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-slate-400 transition hover:bg-white/5 hover:text-slate-100" href="#history"><History className="h-4 w-4" />Analysis history</a>
@@ -177,9 +192,24 @@ export default function Home() {
               {(productCatalog.data as ProductExperience[] | undefined)?.map(experience => {
                 const accent = { cyan: "border-cyan-300/20 bg-cyan-300/[0.06]", violet: "border-violet-300/20 bg-violet-300/[0.06]", emerald: "border-emerald-300/20 bg-emerald-300/[0.06]", amber: "border-amber-200/20 bg-amber-200/[0.06]", sky: "border-sky-300/20 bg-sky-300/[0.06]" }[experience.accent];
                 const status = experience.status === "available" ? "LIVE" : experience.status === "guarded" ? "GUARDED" : "ROADMAP";
-                return <a key={experience.id} href={experience.id === "investigation" ? "#analyze" : experience.id === "arena" ? "#simulate" : "#game"} className={`group rounded-2xl border p-4 transition hover:-translate-y-0.5 hover:border-white/25 ${accent}`}><div className="flex items-center justify-between"><span className="font-mono text-[10px] tracking-[0.18em] text-slate-500">{experience.number}</span><span className="rounded-full border border-white/10 px-2 py-1 font-mono text-[9px] tracking-[0.14em] text-slate-400">{status}</span></div><h3 className="mt-5 text-sm font-semibold leading-5 text-slate-100 group-hover:text-white">{experience.title}</h3><p className="mt-2 text-[11px] font-medium leading-4 text-cyan-100/70">{experience.subtitle}</p><p className="mt-3 text-xs leading-5 text-slate-500">{experience.description}</p></a>;
+                return <a key={experience.id} href={experience.id === "investigation" ? "#investigation" : experience.id === "arena" ? "#simulate" : "#game"} className={`group rounded-2xl border p-4 transition hover:-translate-y-0.5 hover:border-white/25 ${accent}`}><div className="flex items-center justify-between"><span className="font-mono text-[10px] tracking-[0.18em] text-slate-500">{experience.number}</span><span className="rounded-full border border-white/10 px-2 py-1 font-mono text-[9px] tracking-[0.14em] text-slate-400">{status}</span></div><h3 className="mt-5 text-sm font-semibold leading-5 text-slate-100 group-hover:text-white">{experience.title}</h3><p className="mt-2 text-[11px] font-medium leading-4 text-cyan-100/70">{experience.subtitle}</p><p className="mt-3 text-xs leading-5 text-slate-500">{experience.description}</p></a>;
               })}
             </div>
+          </section>
+
+          <section id="investigation" className="overflow-hidden rounded-[28px] border border-cyan-300/20 bg-gradient-to-br from-cyan-300/[0.08] via-white/[0.025] to-sky-300/[0.05] shadow-2xl shadow-black/20">
+            <div className="flex flex-col gap-4 border-b border-white/10 p-6 sm:p-8 lg:flex-row lg:items-start lg:justify-between">
+              <div><div className="mb-3 flex flex-wrap items-center gap-2"><Badge className="border-cyan-300/25 bg-cyan-300/10 text-cyan-200">AUTONOMOUS INVESTIGATION LAB</Badge><span className="font-mono text-[10px] uppercase tracking-[0.18em] text-slate-500">mission · foreground · analytics</span></div><h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">Make the agent’s work inspectable.</h2><p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">Set an objective, watch the control plane reason through a bounded plan, and separate live sandbox observations from claims. Sentinel Atlas is view-only: it receives sanitized telemetry; it does not execute samples.</p></div>
+              <div className="flex shrink-0 items-center gap-2 rounded-2xl border border-emerald-300/20 bg-emerald-300/[0.06] px-4 py-3 text-xs text-emerald-200"><Eye className="h-4 w-4" />VIEW-ONLY SANDBOX</div>
+            </div>
+            <div className="grid gap-6 p-6 sm:p-8 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+              <Card className="border-white/10 bg-black/15 shadow-none">
+                <CardHeader className="border-b border-white/10 pb-5"><div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-cyan-300"><Target className="h-3.5 w-3.5" />Mission / objective</div><CardTitle className="text-xl text-white">What should the agent determine?</CardTitle></CardHeader>
+                <CardContent className="space-y-5 pt-6"><Textarea value={investigationObjective} onChange={event => setInvestigationObjective(event.target.value)} maxLength={600} className="min-h-[150px] resize-y border-white/10 bg-black/20 text-slate-100 placeholder:text-slate-600" /><div className="rounded-xl border border-white/10 bg-black/10 p-4"><p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Constraints</p><div className="mt-3 flex flex-wrap gap-2"><span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1.5 text-xs text-cyan-100">sandbox only</span><span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1.5 text-xs text-cyan-100">no external targets</span><span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1.5 text-xs text-cyan-100">evidence required</span></div></div><Button onClick={() => startInvestigation.mutate({ objective: investigationObjective })} disabled={!isAuthenticated || startInvestigation.isPending || investigationObjective.trim().length < 10} className="h-11 w-full bg-cyan-300 text-[#06202a] hover:bg-cyan-200">{startInvestigation.isPending ? "Planning bounded investigation…" : <><ListChecks className="mr-2 h-4 w-4" />Begin investigation</>}</Button>{!isAuthenticated && <p className="text-center text-xs text-slate-500">Sign in to persist missions and analytics.</p>}</CardContent>
+              </Card>
+              <div className="space-y-5"><div className="rounded-2xl border border-white/10 bg-[#0b1727] p-5"><div className="mb-4 flex items-center justify-between"><div><div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-violet-200"><Activity className="h-3.5 w-3.5" />Foreground state</div><h3 className="text-lg font-semibold text-white">Agent activity timeline</h3></div><Badge className="border-amber-200/25 bg-amber-200/10 text-amber-100">{investigation?.status === "completed" ? "CASE READY" : "IDLE"}</Badge></div>{investigation ? <div className="space-y-3">{investigation.events.map(event => <div key={event.sequence} className="flex gap-3 rounded-xl border border-white/10 bg-black/10 p-3"><div className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-violet-300/30 bg-violet-300/10 font-mono text-[10px] text-violet-100">{event.sequence}</div><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center justify-between gap-2"><p className="text-sm font-medium text-slate-100">{event.action}</p><span className={`rounded-full border px-2 py-1 font-mono text-[9px] tracking-[0.1em] ${authorityTone(event.authority)}`}>{event.authority}</span></div><p className="mt-1 text-xs leading-5 text-slate-400">{event.detail}</p><p className="mt-1 font-mono text-[10px] text-slate-600">{event.outcome}</p></div></div>)}</div> : <div className="flex min-h-[260px] flex-col items-center justify-center text-center"><Activity className="mb-4 h-8 w-8 text-violet-200" /><p className="text-sm font-medium text-slate-200">No active mission</p><p className="mt-2 max-w-sm text-xs leading-5 text-slate-500">Begin an investigation to watch objective establishment, evidence planning, hypothesis state, and policy boundaries in the foreground.</p></div>}</div><div className="rounded-2xl border border-white/10 bg-black/15 p-5"><div className="mb-4 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-emerald-200"><BarChart3 className="h-3.5 w-3.5" />Data analytics</div><div className="grid grid-cols-2 gap-2 sm:grid-cols-5"><Metric label="Cases" value={investigationAnalytics.data?.casesAnalyzed ?? 0} /><Metric label="Evidence" value={investigationAnalytics.data?.evidenceObserved ?? 0} /><Metric label="Complete" value={investigationAnalytics.data?.completedCases ?? 0} /><Metric label="Guarded" value={investigationAnalytics.data?.guardedActions ?? 0} /><Metric label="Approval" value={investigationAnalytics.data?.approvalRequired ?? 0} /></div><p className="mt-4 text-xs leading-5 text-slate-500">Historical metrics count persisted investigation cases and policy events. Live sandbox observations remain read-only and provenance-bound.</p></div></div>
+            </div>
+            {investigation && <div className="border-t border-white/10 px-6 py-4 sm:px-8"><div className="flex flex-wrap items-center gap-3 text-xs text-slate-400"><span className={`rounded-full border px-2 py-1 ${confidenceTone(investigation.confidence as Result["confidence"])}`}>{investigation.confidence}</span><span>{investigation.conclusion}</span><span className="ml-auto font-mono text-[10px] text-slate-600">{investigation.provenance}</span></div></div>}
           </section>
 
           <section id="game" className="game-panel overflow-hidden rounded-[28px] border border-violet-300/20 bg-gradient-to-br from-violet-300/[0.08] via-white/[0.025] to-cyan-300/[0.06] shadow-2xl shadow-black/20">
@@ -220,6 +250,10 @@ export default function Home() {
       <footer className="mx-auto flex max-w-[1440px] flex-col gap-2 border-t border-white/10 px-5 py-8 text-xs text-slate-600 sm:flex-row sm:items-center sm:justify-between lg:px-10"><span>Sentinel Atlas · defensive research companion</span><span className="inline-flex items-center gap-2"><TriangleAlert className="h-3.5 w-3.5" />Human review remains part of the loop</span></footer>
     </div>
   );
+}
+
+function Metric({ label, value }: { label: string; value: number }) {
+  return <div className="rounded-xl border border-white/10 bg-black/10 p-3 text-center"><p className="font-mono text-[9px] uppercase tracking-[0.12em] text-slate-500">{label}</p><p className="mt-1 text-xl font-semibold text-white">{value}</p></div>;
 }
 
 function ResultBlock({ label, text, items, chips, accent }: { label: string; text?: string; items?: readonly string[]; chips?: boolean; accent?: "amber" | "emerald" }) {

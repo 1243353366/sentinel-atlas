@@ -1,6 +1,6 @@
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { evaluationRecords, gameRuns, InsertSimulation, InsertThreatAnalysis, InsertUser, playerProgress, simulations, threatAnalyses, users, zombieQuarantine } from "../drizzle/schema";
+import { evaluationRecords, gameRuns, InsertInvestigationCase, InsertInvestigationEvent, InsertSimulation, InsertThreatAnalysis, InsertUser, investigationCases, investigationEvents, playerProgress, simulations, threatAnalyses, users, zombieQuarantine } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -141,4 +141,27 @@ export async function saveEvaluationRecord(userId: number | null, input: { scena
   if (!db || !userId) return null;
   const result = await db.insert(evaluationRecords).values({ userId, source: "training_game", ...input, regressionStatus: "pending" });
   return Number(result[0].insertId);
+}
+
+export async function saveInvestigationCase(input: InsertInvestigationCase, events: InsertInvestigationEvent[]) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(investigationCases).values(input);
+  const caseId = Number(result[0].insertId);
+  if (events.length) await db.insert(investigationEvents).values(events.map(event => ({ ...event, caseId })));
+  return caseId;
+}
+
+export async function getRecentInvestigationCases(userId: number, limit = 8) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(investigationCases).where(eq(investigationCases.userId, userId)).orderBy(desc(investigationCases.createdAt)).limit(limit);
+}
+
+export async function getInvestigationAnalytics(userId: number) {
+  const db = await getDb();
+  if (!db) return { casesAnalyzed: 0, evidenceObserved: 0, guardedActions: 0, approvalRequired: 0, completedCases: 0 };
+  const [cases] = await db.select({ count: sql<number>`count(*)`, evidence: sql<number>`coalesce(sum(${investigationCases.evidenceCount}), 0)`, completed: sql<number>`sum(case when ${investigationCases.status} = 'completed' then 1 else 0 end)` }).from(investigationCases).where(eq(investigationCases.userId, userId));
+  const [events] = await db.select({ guarded: sql<number>`sum(case when ${investigationEvents.authority} = 'GUARDED' then 1 else 0 end)`, approval: sql<number>`sum(case when ${investigationEvents.authority} = 'APPROVAL REQUIRED' then 1 else 0 end)` }).from(investigationEvents).innerJoin(investigationCases, eq(investigationEvents.caseId, investigationCases.id)).where(eq(investigationCases.userId, userId));
+  return { casesAnalyzed: Number(cases?.count ?? 0), evidenceObserved: Number(cases?.evidence ?? 0), guardedActions: Number(events?.guarded ?? 0), approvalRequired: Number(events?.approval ?? 0), completedCases: Number(cases?.completed ?? 0) };
 }
