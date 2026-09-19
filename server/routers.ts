@@ -126,6 +126,13 @@ const OBSERVATORY_GRAPH = {
     { type: "OBSERVATION", statement: "Sample-X produced a fixed lab-resolver query for c2-04.lab.invalid.", provenance: "sandbox telemetry fixture", verification: "reviewed" },
     { type: "INFERENCE", statement: "Resolver-to-process correlation may improve detection coverage.", provenance: "analyst correlation", verification: "unverified" },
   ],
+  lifecycle: {
+    detection: { title: "Detection profile", items: ["resolver query + process identity", "periodicity and volume baseline", "false-positive review before promotion"], status: "candidate" },
+    simulation: { title: "What would happen?", items: ["non-routable synthetic target", "simulated DNS beacon event", "telemetry and alert timeline"], status: "range-only" },
+    mitigation: { title: "Mitigation", items: ["preserve evidence and scope", "tune resolver-to-process rule", "retest against benign fixtures"], status: "defensive" },
+    countermeasure: { title: "Authorized countermeasure", items: ["isolate synthetic node", "block lab indicator in test policy", "human approval before any real action"], status: "approval required" },
+    legal: { title: "Legal / policy review", items: ["written authorization and scope", "rules of engagement and retention", "privacy, disclosure, and counsel review"], status: "not legal advice" },
+  },
 } as const;
 
 const investigationInputSchema = z.object({

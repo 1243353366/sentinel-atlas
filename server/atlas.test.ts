@@ -50,6 +50,9 @@ describe("observatory.graph", () => {
     expect(graph.edges.every(edge => edge.class && edge.confidence)).toBe(true);
     expect(graph.evidence.some(item => item.type === "OBSERVATION")).toBe(true);
     expect(graph.evidence.some(item => item.type === "INFERENCE")).toBe(true);
+    expect(graph.lifecycle.detection.items.length).toBeGreaterThan(0);
+    expect(graph.lifecycle.countermeasure.status).toBe("approval required");
+    expect(graph.lifecycle.legal.status).toBe("not legal advice");
   });
 
   it("exposes analytics only for the synthetic observatory fixture", async () => {
