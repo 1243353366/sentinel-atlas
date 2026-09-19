@@ -26,6 +26,18 @@ npx wrangler deploy
 
 The expected Worker name is `sentinel-atlas-superagent`.
 
+## Node 22 and local Worker preview
+
+Sentinel Atlas targets Node.js 22 or newer. This matters for current Wrangler releases and avoids relying on an outdated CLI. For the separate Worker target, use a Node 22 shell and preview-provided port:
+
+```bash
+nvm install 22
+nvm use 22
+npx wrangler dev --local --port "${PORT:-8787}"
+```
+
+The full Sentinel Atlas application uses MySQL/TiDB, not D1. An imported Replit Worker that declares a D1 binding can initialize its local database with `npx wrangler d1 migrations apply <database-name> --local`. Workers AI may require Cloudflare-hosted bindings; local core/API routes should remain usable, while unavailable AI calls must fail explicitly.
+
 ## Do not deploy the failed target
 
 `docs/failed/wrangler.FAILED-node-build-do-not-deploy.jsonc.disabled` is a historical reference for the Node/Express application bundle at `dist/index.js`. **It failed to deploy as a Cloudflare Worker and must not be selected.** The Node application remains a separate WebDev runtime target.
