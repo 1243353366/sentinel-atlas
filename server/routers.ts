@@ -114,17 +114,20 @@ const OBSERVATORY_GRAPH = {
     { id: "c2-04", type: "domain", name: "c2-04.lab.invalid", confidence: "medium", verification: "reviewed", evidence: "OBSERVATION" },
     { id: "tech-dns", type: "technique", name: "T1071.004 DNS (synthetic)", confidence: "low", verification: "unverified", evidence: "HYPOTHESIS" },
     { id: "gap-dns", type: "detection_gap", name: "Resolver-to-process correlation", confidence: "medium", verification: "reviewed", evidence: "INFERENCE" },
+    { id: "sat-pass-01", type: "satellite_observation", name: "SAT-PASS-01 (synthetic overhead window)", confidence: "low", verification: "unverified", evidence: "OBSERVATION" },
   ],
   edges: [
     { from: "sample-x", to: "node-17", label: "observed_on", class: "observed", confidence: "medium" },
     { from: "sample-x", to: "c2-04", label: "contacts", class: "observed", confidence: "medium" },
     { from: "c2-04", to: "tech-dns", label: "exhibits", class: "inferred", confidence: "low" },
     { from: "tech-dns", to: "gap-dns", label: "creates_gap", class: "hypothesized", confidence: "low" },
+    { from: "sat-pass-01", to: "node-17", label: "time_correlates_with", class: "observed", confidence: "low" },
   ],
   evidence: [
     { type: "FACT", statement: "node-17.synthetic is a non-routable lab identifier.", provenance: "synthetic fixture generator", verification: "verified" },
     { type: "OBSERVATION", statement: "Sample-X produced a fixed lab-resolver query for c2-04.lab.invalid.", provenance: "sandbox telemetry fixture", verification: "reviewed" },
     { type: "INFERENCE", statement: "Resolver-to-process correlation may improve detection coverage.", provenance: "analyst correlation", verification: "unverified" },
+    { type: "OBSERVATION", statement: "A synthetic satellite pass overlaps the fixture event window; this does not establish actor location or attribution.", provenance: "synthetic orbital observation", verification: "unverified" },
   ],
   lifecycle: {
     detection: { title: "Detection profile", items: ["resolver query + process identity", "periodicity and volume baseline", "false-positive review before promotion"], status: "candidate" },
@@ -226,7 +229,7 @@ export const appRouter = router({
   }),
   observatory: router({
     graph: publicProcedure.query(() => OBSERVATORY_GRAPH),
-    analytics: publicProcedure.query(() => ({ sources: 1, observations: 2, entities: OBSERVATORY_GRAPH.nodes.length, relationships: OBSERVATORY_GRAPH.edges.length, evidenceRecords: OBSERVATORY_GRAPH.evidence.length, inferredRelationships: OBSERVATORY_GRAPH.edges.filter(edge => edge.class !== "observed").length, scope: OBSERVATORY_GRAPH.scope })),
+    analytics: publicProcedure.query(() => ({ sources: 1, observations: 3, entities: OBSERVATORY_GRAPH.nodes.length, relationships: OBSERVATORY_GRAPH.edges.length, evidenceRecords: OBSERVATORY_GRAPH.evidence.length, inferredRelationships: OBSERVATORY_GRAPH.edges.filter(edge => edge.class !== "observed").length, scope: OBSERVATORY_GRAPH.scope })),
   }),
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),

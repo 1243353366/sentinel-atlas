@@ -78,3 +78,23 @@ Production and cyber-range concerns remain separate. The production application 
 
 
 The observatory also presents a bounded lifecycle: **detect → simulate → mitigate → authorized countermeasure → legal/policy review**. “What would happen?” is represented with non-routable synthetic targets and telemetry fixtures. Countermeasures require explicit authorization and human approval; the interface does not retaliate against real attackers or third-party infrastructure. Legal cards are operational reminders—not legal advice—and should be reviewed against written scope, rules of engagement, privacy/retention requirements, disclosure obligations, and counsel guidance.
+
+
+## Satellite / geospatial evidence layer
+
+The Observatory treats satellite and geospatial information as its own evidence class. The intended lifecycle is **observe → correlate → visualize → simulate**; it does not command spacecraft, control ground stations, or infer actor location from an overhead pass. Synthetic orbital windows can be correlated with a synthetic incident timeline, but correlation is not attribution.
+
+Reference ecosystem for future adapters:
+
+- [SatNOGS](https://github.com/satnogs) — open ground-station and telemetry ecosystem (`@satnogs`).
+- [OpenSatKit](https://github.com/OpenSatKit/OpenSatKit) — spacecraft flight-software simulation reference (`@OpenSatKit`).
+- [Orekit](https://github.com/CS-SI/Orekit) — orbital-dynamics and visibility reference (`@CS-SI`).
+- [Gpredict](https://github.com/red5space/gpredict) — satellite tracking reference (`@red5space`).
+- [Satvisor Data](https://github.com/satvisorcom/satvisor-data) — orbital-data reference (`@satvisorcom`).
+- [Overwatch](https://github.com/confinia/overwatch) — satellite operations dashboard reference (`@confinia`).
+- [University Class Open Ground Station](https://github.com/uniclogs/uniclogs-hardware) — educational ground-station reference (`@uniclogs`).
+- [Raspi-GroundStation](https://github.com/BrianOMath/Raspi-GroundStation) — educational SDR/ground-station reference (`@BrianOMath`).
+
+These are **reference-only upstreams** in this release: Sentinel Atlas does not copy their source code, bundle their data, or relicense their work. Any future adapter must preserve the upstream repository’s declared license, copyright notices, attribution requirements, and data terms in a separate dependency notice before code or data is incorporated.
+
+The verified creator, organization, license, and uncertainty record is maintained in [`UPSTREAM-ATTRIBUTION.md`](UPSTREAM-ATTRIBUTION.md) and linked from [`NOTICE.md`](NOTICE.md).
