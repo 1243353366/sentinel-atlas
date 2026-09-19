@@ -50,6 +50,13 @@
       "when": 1789856772584,
       "tag": "0006_tiny_smasher",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1789857171114,
+      "tag": "0007_amusing_wolverine",
+      "breakpoints": true
     }
   ]
 }

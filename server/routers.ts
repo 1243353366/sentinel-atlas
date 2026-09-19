@@ -105,6 +105,29 @@ const PRODUCT_EXPERIENCES = [
   { id: "builder", number: "05", title: "Researcher / Scenario Builder", subtitle: "Objective → environment → success condition", description: "Compose future experiments that generate telemetry, quizzes, evaluation criteria, and regression cases.", status: "roadmap", accent: "sky" },
 ] as const;
 
+const OBSERVATORY_GRAPH = {
+  scope: "analysis",
+  source: { name: "Sentinel Atlas synthetic fixture", type: "simulation", provider: "Sentinel Atlas", trustLevel: "medium", collectionMethod: "deterministic fixture" },
+  nodes: [
+    { id: "sample-x", type: "malware_family", name: "Sample-X (fictional)", confidence: "medium", verification: "reviewed", evidence: "OBSERVATION" },
+    { id: "node-17", type: "infrastructure", name: "node-17.synthetic", confidence: "high", verification: "verified", evidence: "FACT" },
+    { id: "c2-04", type: "domain", name: "c2-04.lab.invalid", confidence: "medium", verification: "reviewed", evidence: "OBSERVATION" },
+    { id: "tech-dns", type: "technique", name: "T1071.004 DNS (synthetic)", confidence: "low", verification: "unverified", evidence: "HYPOTHESIS" },
+    { id: "gap-dns", type: "detection_gap", name: "Resolver-to-process correlation", confidence: "medium", verification: "reviewed", evidence: "INFERENCE" },
+  ],
+  edges: [
+    { from: "sample-x", to: "node-17", label: "observed_on", class: "observed", confidence: "medium" },
+    { from: "sample-x", to: "c2-04", label: "contacts", class: "observed", confidence: "medium" },
+    { from: "c2-04", to: "tech-dns", label: "exhibits", class: "inferred", confidence: "low" },
+    { from: "tech-dns", to: "gap-dns", label: "creates_gap", class: "hypothesized", confidence: "low" },
+  ],
+  evidence: [
+    { type: "FACT", statement: "node-17.synthetic is a non-routable lab identifier.", provenance: "synthetic fixture generator", verification: "verified" },
+    { type: "OBSERVATION", statement: "Sample-X produced a fixed lab-resolver query for c2-04.lab.invalid.", provenance: "sandbox telemetry fixture", verification: "reviewed" },
+    { type: "INFERENCE", statement: "Resolver-to-process correlation may improve detection coverage.", provenance: "analyst correlation", verification: "unverified" },
+  ],
+} as const;
+
 const investigationInputSchema = z.object({
   objective: z.string().trim().min(10).max(600),
   constraints: z.array(z.string().trim().min(1).max(180)).max(8).default(["sandbox only", "no external targets", "evidence required for conclusions"]),
@@ -193,6 +216,10 @@ export const appRouter = router({
     }),
     recent: protectedProcedure.query(({ ctx }) => getRecentInvestigationCases(ctx.user.id)),
     analytics: protectedProcedure.query(({ ctx }) => getInvestigationAnalytics(ctx.user.id)),
+  }),
+  observatory: router({
+    graph: publicProcedure.query(() => OBSERVATORY_GRAPH),
+    analytics: publicProcedure.query(() => ({ sources: 1, observations: 2, entities: OBSERVATORY_GRAPH.nodes.length, relationships: OBSERVATORY_GRAPH.edges.length, evidenceRecords: OBSERVATORY_GRAPH.evidence.length, inferredRelationships: OBSERVATORY_GRAPH.edges.filter(edge => edge.class !== "observed").length, scope: OBSERVATORY_GRAPH.scope })),
   }),
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),

@@ -40,3 +40,21 @@ describe("investigation.start", () => {
     expect(JSON.stringify(investigation)).not.toMatch(/execute|download|propagate/i);
   });
 });
+
+
+describe("observatory.graph", () => {
+  it("returns a bounded analysis graph with provenance and evidence levels", async () => {
+    const graph = await caller().observatory.graph();
+    expect(graph.scope).toBe("analysis");
+    expect(graph.nodes.length).toBeGreaterThan(0);
+    expect(graph.edges.every(edge => edge.class && edge.confidence)).toBe(true);
+    expect(graph.evidence.some(item => item.type === "OBSERVATION")).toBe(true);
+    expect(graph.evidence.some(item => item.type === "INFERENCE")).toBe(true);
+  });
+
+  it("exposes analytics only for the synthetic observatory fixture", async () => {
+    const analytics = await caller().observatory.analytics();
+    expect(analytics.scope).toBe("analysis");
+    expect(analytics.inferredRelationships).toBeGreaterThan(0);
+  });
+});

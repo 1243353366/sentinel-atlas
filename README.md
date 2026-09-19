@@ -68,3 +68,10 @@ docker compose -f docker-compose.selfhost.yml up -d
 ```
 
 The production container intentionally does **not** replay the full migration history on every boot; this avoids startup failure when a managed database already contains the tables. Open `http://localhost:3000`. To stop the app without deleting the database volume, run `docker compose -f docker-compose.selfhost.yml down`. Put it behind an HTTPS reverse proxy before exposing it to the public internet, and keep `.env` out of Git.
+
+
+## Cyber Threat Observatory — analysis slice
+
+The first observatory slice is an analysis-only evidence graph. It models `sources`, `observations`, `entities`, `relationships`, and `evidence` as separate normalized records, preserving provenance, confidence, verification status, and the distinction between facts, observations, inferences, and hypotheses. The dashboard uses a bounded synthetic fixture to demonstrate the graph without acquiring or executing malware.
+
+Production and cyber-range concerns remain separate. The production application is not a range target, the current observatory graph has no real-network adapter, and no interface in this slice executes code, downloads samples, propagates, or reaches external infrastructure. Future ingestion adapters must be authorized, read-only by default, and isolated from production credentials, databases, filesystems, and networks.

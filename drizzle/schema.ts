@@ -137,3 +137,69 @@ export type PlayerProgress = typeof playerProgress.$inferSelect;
 export type GameRun = typeof gameRuns.$inferSelect;
 export type EvaluationRecord = typeof evaluationRecords.$inferSelect;
 export type LearningCandidate = typeof learningCandidates.$inferSelect;
+
+
+export const observatorySources = mysqlTable("observatory_sources", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 180 }).notNull(),
+  type: varchar("type", { length: 64 }).notNull(),
+  provider: varchar("provider", { length: 180 }).notNull(),
+  url: text("url"),
+  trustLevel: mysqlEnum("trustLevel", ["unrated", "low", "medium", "high"]).notNull().default("unrated"),
+  collectionMethod: varchar("collectionMethod", { length: 120 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const observatoryObservations = mysqlTable("observatory_observations", {
+  id: int("id").autoincrement().primaryKey(),
+  sourceId: int("sourceId"),
+  observationType: varchar("observationType", { length: 120 }).notNull(),
+  observedAt: timestamp("observedAt"),
+  rawData: text("rawData").notNull(),
+  normalizedData: text("normalizedData").notNull(),
+  confidence: mysqlEnum("confidence", ["low", "medium", "high"]).notNull(),
+  verificationStatus: mysqlEnum("verificationStatus", ["unverified", "reviewed", "verified"]).notNull().default("unverified"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const observatoryEntities = mysqlTable("observatory_entities", {
+  id: int("id").autoincrement().primaryKey(),
+  entityType: varchar("entityType", { length: 64 }).notNull(),
+  canonicalName: varchar("canonicalName", { length: 180 }).notNull(),
+  aliases: text("aliases").notNull(),
+  metadata: text("metadata").notNull(),
+  confidence: mysqlEnum("confidence", ["low", "medium", "high"]).notNull(),
+  verificationStatus: mysqlEnum("verificationStatus", ["unverified", "reviewed", "verified"]).notNull().default("unverified"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const observatoryRelationships = mysqlTable("observatory_relationships", {
+  id: int("id").autoincrement().primaryKey(),
+  fromEntityId: int("fromEntityId").notNull(),
+  toEntityId: int("toEntityId").notNull(),
+  relationshipType: varchar("relationshipType", { length: 80 }).notNull(),
+  relationshipClass: mysqlEnum("relationshipClass", ["deterministic", "observed", "inferred", "probabilistic", "hypothesized", "attributed"]).notNull(),
+  sourceId: int("sourceId"),
+  evidenceId: int("evidenceId"),
+  confidence: mysqlEnum("confidence", ["low", "medium", "high"]).notNull(),
+  verificationStatus: mysqlEnum("verificationStatus", ["unverified", "reviewed", "verified"]).notNull().default("unverified"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const observatoryEvidence = mysqlTable("observatory_evidence", {
+  id: int("id").autoincrement().primaryKey(),
+  observationId: int("observationId"),
+  evidenceType: mysqlEnum("evidenceType", ["FACT", "OBSERVATION", "INFERENCE", "HYPOTHESIS", "ATTRIBUTION", "VERIFIED_CLAIM"]).notNull(),
+  statement: text("statement").notNull(),
+  provenance: text("provenance").notNull(),
+  confidence: mysqlEnum("confidence", ["low", "medium", "high"]).notNull(),
+  verificationStatus: mysqlEnum("verificationStatus", ["unverified", "reviewed", "verified"]).notNull().default("unverified"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ObservatorySource = typeof observatorySources.$inferSelect;
+export type ObservatoryObservation = typeof observatoryObservations.$inferSelect;
+export type ObservatoryEntity = typeof observatoryEntities.$inferSelect;
+export type ObservatoryRelationship = typeof observatoryRelationships.$inferSelect;
+export type ObservatoryEvidence = typeof observatoryEvidence.$inferSelect;
