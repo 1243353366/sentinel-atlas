@@ -160,6 +160,7 @@ export default function Home() {
               <div className="mb-5 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-cyan-300"><Activity className="h-3.5 w-3.5" />Workspace</div>
               <nav className="space-y-1 text-sm">
                 <a className="flex items-center gap-3 rounded-xl bg-cyan-300/10 px-3 py-2.5 text-cyan-100" href="#investigation"><Target className="h-4 w-4" />Start investigation</a>
+                <a className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-emerald-200 transition hover:bg-emerald-300/10 hover:text-emerald-100" href="/release-trust"><ShieldCheck className="h-4 w-4" />Verify releases</a>
                 <a className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-slate-400 transition hover:bg-white/5 hover:text-slate-100" href="#observatory"><Eye className="h-4 w-4" />Open observatory</a>
                 <a className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-slate-400 transition hover:bg-white/5 hover:text-slate-100" href="#game"><Play className="h-4 w-4" />Play training run</a>
                 <a className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-slate-400 transition hover:bg-white/5 hover:text-slate-100" href="#analyze"><BrainCircuit className="h-4 w-4" />Analyze behavior</a>
@@ -182,7 +183,7 @@ export default function Home() {
               <div className="mb-5 flex flex-wrap items-center gap-2"><Badge className="border-cyan-300/25 bg-cyan-300/10 text-cyan-200">COMPANION APP</Badge><span className="text-xs text-slate-500">schema-backed · private workspace</span></div>
               <h1 className="max-w-3xl text-4xl font-semibold tracking-tight text-white sm:text-6xl">Think like the adversary. <span className="text-cyan-300">Defend like the operator.</span></h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">Sentinel Atlas turns behavior notes into an auditable chain: ATT&amp;CK hypothesis, likely objective, expected telemetry, detection gap, and a safe next test.</p>
-              <div className="mt-7 flex flex-wrap gap-3 text-xs text-slate-400"><span className="inline-flex items-center gap-2"><Database className="h-3.5 w-3.5 text-cyan-300" />Own database</span><span className="inline-flex items-center gap-2"><BrainCircuit className="h-3.5 w-3.5 text-cyan-300" />Structured AI output</span><span className="inline-flex items-center gap-2"><LockKeyhole className="h-3.5 w-3.5 text-cyan-300" />Safety-gated</span></div>
+              <div className="mt-7 flex flex-wrap gap-3 text-xs text-slate-400"><span className="inline-flex items-center gap-2"><Database className="h-3.5 w-3.5 text-cyan-300" />Own database</span><span className="inline-flex items-center gap-2"><BrainCircuit className="h-3.5 w-3.5 text-cyan-300" />Structured AI output</span><span className="inline-flex items-center gap-2"><LockKeyhole className="h-3.5 w-3.5 text-cyan-300" />Safety-gated</span><a href="/release-trust" className="inline-flex items-center gap-2 text-emerald-200 transition hover:text-emerald-100"><ShieldCheck className="h-3.5 w-3.5" />Signed, hash-first releases<ArrowUpRight className="h-3 w-3" /></a></div>
             </div>
             <div className="hero-orbit" aria-hidden="true"><div /><div /><div /></div>
           </section>

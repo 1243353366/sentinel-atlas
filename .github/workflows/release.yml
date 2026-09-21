@@ -1,0 +1,112 @@
+name: Signed release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  build-attest-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out the tagged source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 25
+        uses: actions/setup-node@v4
+        with:
+          node-version: '25.9.0'
+
+      - name: Install pinned pnpm
+        run: npm install --global pnpm@10.4.1
+
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level high
+
+      - name: Type-check, test, and build
+        run: |
+          pnpm check
+          pnpm test
+          pnpm build
+
+      - name: Create deterministic release archive
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME}"
+          archive="sentinel-atlas-${version}.tar.gz"
+          epoch="$(git show -s --format=%ct "$GITHUB_SHA")"
+          mkdir -p "release/stage/sentinel-atlas-${version}"
+          cp -R dist "release/stage/sentinel-atlas-${version}/dist"
+          cp package.json pnpm-lock.yaml Dockerfile LICENSE NOTICE.md README.md CHANGELOG.md "release/stage/sentinel-atlas-${version}/"
+          tar \
+            --sort=name \
+            --mtime="@${epoch}" \
+            --owner=0 \
+            --group=0 \
+            --numeric-owner \
+            -C release/stage \
+            -czf "release/${archive}" \
+            "sentinel-atlas-${version}"
+          (cd release && sha256sum "$archive" > SHA256SUMS.txt)
+          echo "archive=release/${archive}" >> "$GITHUB_OUTPUT"
+          echo "archive_name=${archive}" >> "$GITHUB_OUTPUT"
+
+      - name: Attest release archive
+        id: attest
+        uses: actions/attest@v4
+        with:
+          subject-path: ${{ steps.package.outputs.archive }}
+
+      - name: Publish signed GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARCHIVE: ${{ steps.package.outputs.archive }}
+          ARCHIVE_NAME: ${{ steps.package.outputs.archive_name }}
+          ATTESTATION_URL: ${{ steps.attest.outputs.attestation-url }}
+        run: |
+          cat > /tmp/release-notes.md <<EOF
+          ## Sentinel Atlas ${GITHUB_REF_NAME}
+
+          Self-hostable defensive reasoning workspace with local-first artifact hashing, explicit-consent CIRCL hash lookup, and signed GitHub build provenance.
+
+          **Verify the downloaded archive**
+
+          \`gh attestation verify ${ARCHIVE_NAME} --repo ${GITHUB_REPOSITORY} --signer-workflow ${GITHUB_REPOSITORY}/.github/workflows/release.yml --source-ref refs/tags/${GITHUB_REF_NAME} --deny-self-hosted-runners\`
+
+          [View the signed attestation](${ATTESTATION_URL})
+
+          [Read the changelog](https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_REF_NAME}/CHANGELOG.md)
+
+          The attestation proves artifact identity and workflow provenance. It is not a malware-free guarantee.
+          EOF
+          gh release create "$GITHUB_REF_NAME" \
+            "$ARCHIVE" \
+            release/SHA256SUMS.txt \
+            --verify-tag \
+            --title "Sentinel Atlas ${GITHUB_REF_NAME}" \
+            --notes-file /tmp/release-notes.md
+
+      - name: Publish verification summary
+        env:
+          ATTESTATION_URL: ${{ steps.attest.outputs.attestation-url }}
+          ARCHIVE_NAME: ${{ steps.package.outputs.archive_name }}
+        run: |
+          {
+            echo '## Signed release published'
+            echo
+            echo "- Artifact: \`${ARCHIVE_NAME}\`"
+            echo "- Attestation: ${ATTESTATION_URL}"
+            echo "- Runner: GitHub-hosted \`${RUNNER_OS}\`"
+            echo "- Source: \`${GITHUB_SHA}\`"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -123,6 +123,19 @@ export const learningCandidates = mysqlTable("learning_candidates", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+export const releaseTrustEvents = mysqlTable("release_trust_events", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId"),
+  eventType: mysqlEnum("eventType", ["remote_hash_lookup", "release_attestation"]).notNull(),
+  provider: varchar("provider", { length: 120 }).notNull(),
+  outcome: mysqlEnum("outcome", ["known", "not_found", "flagged", "unavailable", "verified"]).notNull(),
+  digestAlgorithm: varchar("digestAlgorithm", { length: 24 }).notNull().default("SHA-256"),
+  consentGranted: int("consentGranted").notNull().default(0),
+  fileUploaded: int("fileUploaded").notNull().default(0),
+  details: text("details").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type ThreatAnalysis = typeof threatAnalyses.$inferSelect;
@@ -137,6 +150,8 @@ export type PlayerProgress = typeof playerProgress.$inferSelect;
 export type GameRun = typeof gameRuns.$inferSelect;
 export type EvaluationRecord = typeof evaluationRecords.$inferSelect;
 export type LearningCandidate = typeof learningCandidates.$inferSelect;
+export type ReleaseTrustEvent = typeof releaseTrustEvents.$inferSelect;
+export type InsertReleaseTrustEvent = typeof releaseTrustEvents.$inferInsert;
 
 
 export const observatorySources = mysqlTable("observatory_sources", {

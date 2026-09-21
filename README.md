@@ -2,9 +2,17 @@
 
 Sentinel Atlas is a defensive cyber-reasoning workspace and training roguelike. It combines evidence-grounded analysis, synthetic simulations, a Python research layer, provenance-backed evaluation records, and a bounded Cloudflare Worker superagent.
 
+**Live application:** <https://sentinel-atlas.onrender.com/>
+
+**Release trust center:** <https://sentinel-atlas.onrender.com/release-trust>
+
+**Release history:** [`CHANGELOG.md`](CHANGELOG.md)
+
 ## Product experiences
 
 Sentinel Atlas is organized around five connected experiences: **Autonomous Investigation Lab**, **Purple-Team Arena**, **AI Self-Training Laboratory**, **Adversarial / Deception Lab**, and **Researcher / Scenario Builder**. The shared loop is **Investigate → Attack/Defend → Observe → Explain → Evaluate → Learn → Generate a harder test**.
+
+The public **Release Trust Center** adds three evidence layers without requiring an API key: local browser SHA-256 calculation, explicit-consent hash-only lookup through [CIRCL Hashlookup](https://www.circl.lu/services/hashlookup/), and GitHub/Sigstore build-provenance attestations for tagged release archives. Files are never uploaded to the reputation provider. A CIRCL match or miss is contextual evidence—not a clean or malicious verdict.
 
 ## Worker versions
 
@@ -26,13 +34,13 @@ npx wrangler deploy
 
 The expected Worker name is `sentinel-atlas-superagent`.
 
-## Node 22 and local Worker preview
+## Node 25 and local Worker preview
 
-Sentinel Atlas targets Node.js 22 or newer. This matters for current Wrangler releases and avoids relying on an outdated CLI. For the separate Worker target, use a Node 22 shell and preview-provided port:
+Sentinel Atlas v2.1.0 targets **Node.js 25.9.0**. The version is pinned in `.node-version`, `.nvmrc`, the Docker image, and GitHub Actions. For the separate Worker target, use the same runtime and a preview-provided port:
 
 ```bash
-nvm install 22
-nvm use 22
+nvm install 25.9.0
+nvm use 25.9.0
 npx wrangler dev --local --port "${PORT:-8787}"
 ```
 
@@ -49,6 +57,26 @@ Original Sentinel Atlas project code is licensed under the MIT License; see `LIC
 ## Safety boundary
 
 The superagent exposes bounded, read-only, synthetic-evidence tools. It does not execute code, download samples, grant permissions, access production systems, or learn permission bypasses.
+
+## Release trust and signed provenance
+
+Every `v*` tag runs `.github/workflows/release.yml` on a GitHub-hosted runner. The workflow installs the locked dependency graph, type-checks, tests, builds, creates a deterministic archive, signs that exact archive with `actions/attest@v4`, and publishes the same bytes to GitHub Releases.
+
+After downloading a release archive, verify the artifact, repository, signing workflow, source tag, and hosted-runner policy:
+
+```bash
+gh attestation verify sentinel-atlas-v2.1.0.tar.gz \
+  --repo 1243353366/sentinel-atlas \
+  --signer-workflow 1243353366/sentinel-atlas/.github/workflows/release.yml \
+  --source-ref refs/tags/v2.1.0 \
+  --deny-self-hosted-runners
+```
+
+The live reputation procedure accepts one validated SHA-256 only after explicit consent. It sends that digest to CIRCL over HTTPS, has no upload route, does not transmit filenames or bytes, rate-limits callers, caches results briefly in memory, and labels provider absence as **not found**, never **safe**. CIRCL trust context is visualized in the current UI session only. A second, separate checkbox can optionally persist minimal evidence metadata—provider, outcome, consent, upload status, and timestamp—without storing the digest, filename, file bytes, path, or trust score. The isolated ledger is fail-soft and cannot block the core workspace or lookup result.
+
+## Render deployment
+
+The production Node/Express application is deployed at <https://sentinel-atlas.onrender.com/> from this repository. It binds to `0.0.0.0` on `PORT`, exposes `GET /healthz` for Render health checks, and runs in the pinned Node.js 25 Docker image. The existing Render service and URL are intentionally preserved rather than replaced by a second service.
 
 ## Self-host with Docker
 

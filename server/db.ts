@@ -1,9 +1,10 @@
 import { desc, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { evaluationRecords, gameRuns, InsertInvestigationCase, InsertInvestigationEvent, InsertSimulation, InsertThreatAnalysis, InsertUser, investigationCases, investigationEvents, playerProgress, simulations, threatAnalyses, users, zombieQuarantine } from "../drizzle/schema";
+import { evaluationRecords, gameRuns, InsertInvestigationCase, InsertInvestigationEvent, InsertReleaseTrustEvent, InsertSimulation, InsertThreatAnalysis, InsertUser, investigationCases, investigationEvents, playerProgress, releaseTrustEvents, simulations, threatAnalyses, users, zombieQuarantine } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
+let _releaseTrustLedgerReady = false;
 
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
@@ -15,6 +16,31 @@ export async function getDb() {
     }
   }
   return _db;
+}
+
+async function ensureReleaseTrustLedger(db: NonNullable<Awaited<ReturnType<typeof getDb>>>) {
+  if (_releaseTrustLedgerReady) return true;
+  try {
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS release_trust_events (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        userId INT NULL,
+        eventType ENUM('remote_hash_lookup', 'release_attestation') NOT NULL,
+        provider VARCHAR(120) NOT NULL,
+        outcome ENUM('known', 'not_found', 'flagged', 'unavailable', 'verified') NOT NULL,
+        digestAlgorithm VARCHAR(24) NOT NULL DEFAULT 'SHA-256',
+        consentGranted INT NOT NULL DEFAULT 0,
+        fileUploaded INT NOT NULL DEFAULT 0,
+        details TEXT NOT NULL,
+        createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        INDEX release_trust_events_created_at_idx (createdAt)
+      ) ENGINE=InnoDB
+    `);
+    _releaseTrustLedgerReady = true;
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export async function upsertUser(user: InsertUser): Promise<void> {
@@ -164,4 +190,31 @@ export async function getInvestigationAnalytics(userId: number) {
   const [cases] = await db.select({ count: sql<number>`count(*)`, evidence: sql<number>`coalesce(sum(${investigationCases.evidenceCount}), 0)`, completed: sql<number>`sum(case when ${investigationCases.status} = 'completed' then 1 else 0 end)` }).from(investigationCases).where(eq(investigationCases.userId, userId));
   const [events] = await db.select({ guarded: sql<number>`sum(case when ${investigationEvents.authority} = 'GUARDED' then 1 else 0 end)`, approval: sql<number>`sum(case when ${investigationEvents.authority} = 'APPROVAL REQUIRED' then 1 else 0 end)` }).from(investigationEvents).innerJoin(investigationCases, eq(investigationEvents.caseId, investigationCases.id)).where(eq(investigationCases.userId, userId));
   return { casesAnalyzed: Number(cases?.count ?? 0), evidenceObserved: Number(cases?.evidence ?? 0), guardedActions: Number(events?.guarded ?? 0), approvalRequired: Number(events?.approval ?? 0), completedCases: Number(cases?.completed ?? 0) };
+}
+
+export async function saveReleaseTrustEvent(input: InsertReleaseTrustEvent) {
+  const db = await getDb();
+  if (!db) return null;
+  if (!await ensureReleaseTrustLedger(db)) return null;
+  const result = await db.insert(releaseTrustEvents).values(input);
+  return Number(result[0].insertId);
+}
+
+export async function getRecentReleaseTrustEvents(limit = 8) {
+  const db = await getDb();
+  if (!db) return null;
+  if (!await ensureReleaseTrustLedger(db)) return null;
+  return db.select({
+    id: releaseTrustEvents.id,
+    eventType: releaseTrustEvents.eventType,
+    provider: releaseTrustEvents.provider,
+    outcome: releaseTrustEvents.outcome,
+    digestAlgorithm: releaseTrustEvents.digestAlgorithm,
+    consentGranted: releaseTrustEvents.consentGranted,
+    fileUploaded: releaseTrustEvents.fileUploaded,
+    details: releaseTrustEvents.details,
+    createdAt: releaseTrustEvents.createdAt,
+  }).from(releaseTrustEvents)
+    .orderBy(desc(releaseTrustEvents.createdAt))
+    .limit(limit);
 }

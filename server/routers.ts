@@ -5,6 +5,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { getInvestigationAnalytics, getPlayerProgress, getRecentInvestigationCases, getRecentSimulations, getRecentThreatAnalyses, saveEvaluationRecord, saveGameRun, saveInvestigationCase, saveSimulation, saveThreatAnalysis, saveZombieQuarantine } from "./db";
+import { reputationRouter } from "./routers/reputation";
 
 const modeSchema = z.enum(["analyst", "adversary", "defender", "detection", "auditor"]);
 const inputSchema = z.object({
@@ -215,6 +216,7 @@ async function runAtlas(input: z.infer<typeof inputSchema>): Promise<AtlasResult
 
 export const appRouter = router({
   system: systemRouter,
+  reputation: reputationRouter,
   product: router({
     catalog: publicProcedure.query(() => PRODUCT_EXPERIENCES),
   }),
@@ -242,19 +244,24 @@ export const appRouter = router({
   atlas: router({
     analyze: publicProcedure.input(inputSchema).mutation(async ({ input, ctx }) => {
       const result = await runAtlas(input);
-      const id = await saveThreatAnalysis({
-        userId: ctx.user?.id ?? null,
-        mode: input.mode,
-        observation: input.observation,
-        summary: result.summary,
-        techniques: JSON.stringify(result.techniques),
-        objective: result.objective,
-        telemetry: JSON.stringify(result.telemetry),
-        detectionGap: result.detectionGap,
-        safeTest: result.safeTest,
-        confidence: result.confidence,
-        validationStatus: result.confidence === "RESTRICTED" ? "blocked" : "validated",
-      });
+      let id: number | null = null;
+      try {
+        id = await saveThreatAnalysis({
+          userId: ctx.user?.id ?? null,
+          mode: input.mode,
+          observation: input.observation,
+          summary: result.summary,
+          techniques: JSON.stringify(result.techniques),
+          objective: result.objective,
+          telemetry: JSON.stringify(result.telemetry),
+          detectionGap: result.detectionGap,
+          safeTest: result.safeTest,
+          confidence: result.confidence,
+          validationStatus: result.confidence === "RESTRICTED" ? "blocked" : "validated",
+        });
+      } catch {
+        console.warn("Threat analysis completed without persistence because the database was unavailable.");
+      }
       return { ...result, id };
     }),
     recent: protectedProcedure.query(({ ctx }) => getRecentThreatAnalyses(ctx.user.id)),
